@@ -28,10 +28,28 @@ export default function News() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const CACHE_KEY = "cm_news_cache";
+    const CACHE_TTL = 60 * 60 * 1000; // 1 hour in ms
+
     const apiKey = process.env.NEXT_PUBLIC_NEWSDATA_API_KEY;
     if (!apiKey) {
       setLoading(false);
       return;
+    }
+
+    // Check cache first
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL && data.length > 0) {
+          setArticles(data);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {
+      // Cache read failed, proceed to fetch
     }
 
     fetch(
@@ -43,7 +61,17 @@ export default function News() {
       })
       .then((data) => {
         if (data.results && data.results.length > 0) {
-          setArticles(data.results.map(mapApiToArticle));
+          const mapped = data.results.map(mapApiToArticle);
+          setArticles(mapped);
+          // Save to cache
+          try {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ data: mapped, timestamp: Date.now() })
+            );
+          } catch {
+            // Cache write failed, ignore
+          }
         }
       })
       .catch(() => {
