@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Background layers */
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #111827;
+  --color-bg-tertiary: #1a1a2e;
+
+  /* Accent colors */
+  --color-accent-blue: #3b82f6;
+  --color-accent-cyan: #06b6d4;
+  --color-accent-green: #22c55e;
+  --color-accent-red: #ef4444;
+  --color-accent-amber: #f59e0b;
+
+  /* Text colors */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Glass */
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-bg: rgba(17, 24, 39, 0.60);
+
+  /* Fonts */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Shadows */
+  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #1a1a2e;
+  border-radius: 4px;
+}
+
+/* Utility classes */
+.glass-card {
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 1rem;
+}
+
+.section-container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 640px) {
+  .section-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(to right, var(--color-accent-blue), var(--color-accent-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Logo carousel animation */
+@keyframes scroll-logos {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-logos {
+  animation: scroll-logos 30s linear infinite;
+}
+
+.animate-scroll-logos:hover {
+  animation-play-state: paused;
+}
