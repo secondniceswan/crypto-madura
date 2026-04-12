@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   const cards = [
     {
-      href: "/admin/events",
+      href: "/cm-admin-panel/events",
       label: "Events",
       count: counts.events,
       icon: ImagePlus,
@@ -37,7 +37,7 @@ export default function DashboardPage() {
       bg: "bg-accent-cyan/10",
     },
     {
-      href: "/admin/team",
+      href: "/cm-admin-panel/team",
       label: "Tim Kami",
       count: counts.founders,
       icon: Users,
@@ -45,7 +45,7 @@ export default function DashboardPage() {
       bg: "bg-accent-blue/10",
     },
     {
-      href: "/admin/news",
+      href: "/cm-admin-panel/news",
       label: "Berita Manual",
       count: counts.news,
       icon: Newspaper,
@@ -53,7 +53,7 @@ export default function DashboardPage() {
       bg: "bg-accent-green/10",
     },
     {
-      href: "/admin/contact",
+      href: "/cm-admin-panel/contact",
       label: "Kontak",
       count: null,
       icon: MessageSquare,

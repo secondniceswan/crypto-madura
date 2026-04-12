@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       return;
     }
 
-    router.push("/admin/dashboard");
+    router.push("/cm-admin-panel/dashboard");
     router.refresh();
   }
 

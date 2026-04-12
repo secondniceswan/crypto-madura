@@ -16,11 +16,11 @@ import {
 import { useState } from "react";
 
 const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/events", label: "Events", icon: ImagePlus },
-  { href: "/admin/team", label: "Tim Kami", icon: Users },
-  { href: "/admin/news", label: "Berita Manual", icon: Newspaper },
-  { href: "/admin/contact", label: "Kontak", icon: MessageSquare },
+  { href: "/cm-admin-panel/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/cm-admin-panel/events", label: "Events", icon: ImagePlus },
+  { href: "/cm-admin-panel/team", label: "Tim Kami", icon: Users },
+  { href: "/cm-admin-panel/news", label: "Berita Manual", icon: Newspaper },
+  { href: "/cm-admin-panel/contact", label: "Kontak", icon: MessageSquare },
 ];
 
 function Sidebar({
@@ -85,7 +85,7 @@ export default function AdminPanelShell({
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/admin/login");
+    router.push("/cm-admin-panel/login");
     router.refresh();
   }
 
