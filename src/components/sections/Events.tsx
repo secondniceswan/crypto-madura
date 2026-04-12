@@ -1,7 +1,22 @@
 import SectionHeader from "@/components/ui/SectionHeader";
-import { eventPhotos } from "@/lib/data";
+import EventsGrid from "@/components/ui/EventsGrid";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Events() {
+export default async function Events() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("events")
+    .select("*, event_photos(id, image_url, order_index)")
+    .order("created_at", { ascending: false });
+
+  const events = (data ?? []).map((e) => ({
+    ...e,
+    event_photos: (e.event_photos ?? []).sort(
+      (a: { order_index: number }, b: { order_index: number }) =>
+        a.order_index - b.order_index
+    ),
+  }));
+
   return (
     <section id="events" className="section-container">
       <SectionHeader
@@ -9,7 +24,7 @@ export default function Events() {
         subtitle="Momen-momen seru dari kegiatan komunitas kami"
       />
 
-      {eventPhotos.length === 0 ? (
+      {events.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <p className="text-2xl font-bold text-text-muted mb-2">Coming Soon</p>
           <p className="text-sm text-text-muted">
@@ -17,25 +32,7 @@ export default function Events() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {eventPhotos.map((photo, i) => (
-            <div
-              key={i}
-              className="relative aspect-square rounded-xl overflow-hidden bg-bg-tertiary group"
-            >
-              <div className="w-full h-full bg-gradient-to-br from-accent-blue/10 to-accent-cyan/10 flex items-center justify-center">
-                <span className="text-xs text-text-muted text-center px-2">
-                  {photo.alt}
-                </span>
-              </div>
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-end">
-                <p className="text-xs text-white p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  {photo.alt}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <EventsGrid events={events} />
       )}
     </section>
   );

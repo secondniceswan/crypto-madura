@@ -9,10 +9,18 @@ interface FounderCardProps {
 export default function FounderCard({ founder }: FounderCardProps) {
   return (
     <Card className="text-center">
-      <div className="w-24 h-24 rounded-full bg-bg-tertiary mx-auto mb-4 overflow-hidden">
-        <div className="w-full h-full bg-gradient-to-br from-accent-blue/30 to-accent-cyan/30 flex items-center justify-center text-2xl font-bold text-text-muted">
-          {founder.name.charAt(0)}
-        </div>
+      <div className="w-36 h-36 rounded-full bg-bg-tertiary mx-auto mb-4 overflow-hidden ring-2 ring-accent-blue/20">
+        {founder.image ? (
+          <img
+            src={founder.image}
+            alt={founder.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-accent-blue/30 to-accent-cyan/30 flex items-center justify-center text-3xl font-bold text-text-muted">
+            {founder.name.charAt(0)}
+          </div>
+        )}
       </div>
 
       <h3 className="text-lg font-bold">{founder.name}</h3>
