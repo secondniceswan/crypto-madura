@@ -5,7 +5,6 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import ArticleCard from "@/components/ui/ArticleCard";
 import Modal from "@/components/ui/Modal";
 import { fallbackArticles } from "@/lib/data";
-import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Article, NewsApiArticle } from "@/types";
 
@@ -138,16 +137,17 @@ export default function News() {
     const CACHE_KEY = "cm_news_cache";
     const CACHE_TTL = 60 * 60 * 1000;
 
-    const supabase = createClient();
-    supabase
-      .from("news_manual")
-      .select("*, news_photos(id, image_url, order_index)")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
+    fetch("/api/news-manual")
+      .then((res) => {
+        if (!res.ok) throw new Error("manual news error");
+        return res.json();
+      })
+      .then((data) => {
         if (data && data.length > 0) {
           setManualArticles(data.map(mapManualToArticle));
         }
-      });
+      })
+      .catch(() => {});
 
     try {
       const cached = localStorage.getItem(CACHE_KEY);

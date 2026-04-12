@@ -1,3 +1,5 @@
+export const revalidate = 300; // cache 5 menit
+
 import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/sections/Hero";
 import About from "@/components/sections/About";
