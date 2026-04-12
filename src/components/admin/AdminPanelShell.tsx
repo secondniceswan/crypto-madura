@@ -20,7 +20,7 @@ const navItems = [
   { href: "/cm-admin-panel/events", label: "Events", icon: ImagePlus },
   { href: "/cm-admin-panel/team", label: "Tim Kami", icon: Users },
   { href: "/cm-admin-panel/news", label: "Berita Manual", icon: Newspaper },
-  { href: "/cm-admin-panel/contact", label: "Kontak", icon: MessageSquare },
+  { href: "/cm-admin-panel/contact", label: "Sosmed", icon: MessageSquare },
 ];
 
 function Sidebar({
