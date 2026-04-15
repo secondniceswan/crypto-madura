@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getStoragePath } from "@/lib/storage";
-import { Trash2, Upload, Loader2, X } from "lucide-react";
+import { Trash2, Upload, Loader2, X, Edit, XCircle } from "lucide-react";
 import Image from "next/image";
 
 interface EventPhoto {
@@ -24,13 +24,20 @@ export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  
+  // Edit State
+  const [editItem, setEditItem] = useState<Event | null>(null);
+  const [existingPhotos, setExistingPhotos] = useState<EventPhoto[]>([]);
+  const [deletedPhotos, setDeletedPhotos] = useState<EventPhoto[]>([]);
 
+  const fileRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   async function loadEvents() {
@@ -69,66 +76,138 @@ export default function AdminEventsPage() {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function removeExistingPhoto(photo: EventPhoto) {
+    setExistingPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+    setDeletedPhotos((prev) => [...prev, photo]);
+  }
+
+  function handleEditClick(event: Event) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setEditItem(event);
+    setTitle(event.title);
+    setDescription(event.description || "");
+    setExistingPhotos(event.event_photos);
+    setDeletedPhotos([]);
+    setFiles([]);
+    setPreviews([]);
+    setError("");
+  }
+
+  function handleCancelEdit() {
+    setEditItem(null);
+    setTitle("");
+    setDescription("");
+    setExistingPhotos([]);
+    setDeletedPhotos([]);
+    setFiles([]);
+    setPreviews([]);
+    setError("");
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title || files.length === 0) return;
+    if (!title || (!editItem && files.length === 0)) {
+      if (!title) setError("Judul tidak boleh kosong.");
+      else setError("Harus ada minimal 1 foto.");
+      return;
+    }
+    
+    if (editItem && existingPhotos.length === 0 && files.length === 0) {
+      setError("Event harus memiliki minimal 1 foto.");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
-    // Create event
-    const { data: eventData, error: eventError } = await supabase
-      .from("events")
-      .insert({ title, description })
-      .select()
-      .single();
+    let eventId = editItem?.id;
 
-    if (eventError || !eventData) {
-      setError("Gagal membuat event: " + eventError?.message);
-      setSubmitting(false);
-      return;
+    if (editItem) {
+      // Update Event
+      const { error: updateError } = await supabase
+        .from("events")
+        .update({ title, description })
+        .eq("id", editItem.id);
+
+      if (updateError) {
+        setError("Gagal update event: " + updateError.message);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Delete removed photos
+      if (deletedPhotos.length > 0) {
+        const paths = deletedPhotos
+          .map((p) => getStoragePath(p.image_url, "media"))
+          .filter((p): p is string => p !== null);
+        
+        if (paths.length > 0) {
+          await supabase.storage.from("media").remove(paths);
+        }
+        await supabase
+          .from("event_photos")
+          .delete()
+          .in("id", deletedPhotos.map((p) => p.id));
+      }
+    } else {
+      // Create event
+      const { data: eventData, error: eventError } = await supabase
+        .from("events")
+        .insert({ title, description })
+        .select()
+        .single();
+
+      if (eventError || !eventData) {
+        setError("Gagal membuat event: " + eventError?.message);
+        setSubmitting(false);
+        return;
+      }
+      eventId = eventData.id;
     }
 
-    // Upload all photos
+    // Upload new photos
     const uploadResults: string[] = [];
-    for (const file of files) {
-      const ext = file.name.split(".").pop();
-      const fileName = `events/${eventData.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(fileName, file);
-      if (uploadError) continue;
-      const { data: urlData } = supabase.storage
-        .from("media")
-        .getPublicUrl(fileName);
-      uploadResults.push(urlData.publicUrl);
+    if (files.length > 0 && eventId) {
+      for (const file of files) {
+        const ext = file.name.split(".").pop();
+        const fileName = `events/${eventId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("media")
+          .upload(fileName, file);
+        if (uploadError) continue;
+        const { data: urlData } = supabase.storage
+          .from("media")
+          .getPublicUrl(fileName);
+        uploadResults.push(urlData.publicUrl);
+      }
+
+      if (uploadResults.length === 0 && !editItem) {
+        setError("Gagal upload semua foto.");
+        await supabase.from("events").delete().eq("id", eventId);
+        setSubmitting(false);
+        return;
+      }
+
+      // Insert event_photos
+      const maxExistingIndex = editItem && existingPhotos.length > 0 
+        ? Math.max(...existingPhotos.map(p => p.order_index)) 
+        : -1;
+      
+      const { error: photosError } = await supabase.from("event_photos").insert(
+        uploadResults.map((url, i) => ({
+          event_id: eventId,
+          image_url: url,
+          order_index: maxExistingIndex + 1 + i,
+        }))
+      );
+
+      if (photosError) {
+        setError("Sebagian sukses tapi gagal simpan record foto: " + photosError.message);
+      }
     }
 
-    if (uploadResults.length === 0) {
-      setError("Gagal upload semua foto.");
-      // Rollback event
-      await supabase.from("events").delete().eq("id", eventData.id);
-      setSubmitting(false);
-      return;
-    }
-
-    // Insert event_photos
-    const { error: photosError } = await supabase.from("event_photos").insert(
-      uploadResults.map((url, i) => ({
-        event_id: eventData.id,
-        image_url: url,
-        order_index: i,
-      }))
-    );
-
-    if (photosError) {
-      setError("Event dibuat tapi gagal simpan foto: " + photosError.message);
-    }
-
-    setTitle("");
-    setDescription("");
-    setFiles([]);
-    setPreviews([]);
-    if (fileRef.current) fileRef.current.value = "";
+    handleCancelEdit();
     await loadEvents();
     setSubmitting(false);
   }
@@ -147,6 +226,7 @@ export default function AdminEventsPage() {
     // Delete event (CASCADE deletes event_photos)
     await supabase.from("events").delete().eq("id", event.id);
     setEvents((prev) => prev.filter((e) => e.id !== event.id));
+    if (editItem?.id === event.id) handleCancelEdit();
   }
 
   return (
@@ -157,8 +237,21 @@ export default function AdminEventsPage() {
       </p>
 
       {/* Form */}
-      <div className="glass-card p-6 mb-8">
-        <h2 className="text-base font-semibold mb-4">Tambah Event</h2>
+      <div className={`glass-card p-6 mb-8 border-2 transition-colors ${editItem ? 'border-accent-blue/50 bg-accent-blue/5' : 'border-transparent'}`}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">
+            {editItem ? "Edit Event" : "Tambah Event"}
+          </h2>
+          {editItem && (
+            <button
+              onClick={handleCancelEdit}
+              className="text-xs flex items-center gap-1 text-text-secondary hover:text-white transition-colors"
+            >
+              <XCircle className="w-4 h-4" /> Batal Edit
+            </button>
+          )}
+        </div>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-text-secondary mb-1.5">
@@ -193,12 +286,31 @@ export default function AdminEventsPage() {
             </label>
 
             {/* Preview grid */}
-            {previews.length > 0 && (
+            {(existingPhotos.length > 0 || previews.length > 0) && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+                {/* Existing Photos */}
+                {existingPhotos.map((photo, i) => (
+                  <div
+                    key={`existing-${i}`}
+                    className="relative aspect-square rounded-lg overflow-hidden bg-bg-tertiary group ring-1 ring-glass-border"
+                  >
+                    <Image src={photo.image_url} alt="" fill className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingPhoto(photo)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-accent-red/90 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Hapus foto ini"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                {/* New Previews */}
                 {previews.map((src, i) => (
                   <div
-                    key={i}
-                    className="relative aspect-square rounded-lg overflow-hidden bg-bg-tertiary group"
+                    key={`new-${i}`}
+                    className="relative aspect-square rounded-lg overflow-hidden bg-bg-tertiary group ring-2 ring-accent-blue/50"
                   >
                     <Image src={src} alt="" fill className="object-cover" />
                     <button
@@ -208,21 +320,23 @@ export default function AdminEventsPage() {
                     >
                       <X className="w-3 h-3" />
                     </button>
+                    <span className="absolute bottom-1 right-1 text-[10px] bg-accent-blue px-1.5 py-0.5 rounded text-white font-bold">Baru</span>
                   </div>
                 ))}
+                
                 {/* Add more button */}
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="aspect-square rounded-lg border-2 border-dashed border-glass-border flex flex-col items-center justify-center text-text-muted hover:border-accent-blue/50 transition-colors"
+                  className="aspect-square rounded-lg border-2 border-dashed border-glass-border flex flex-col items-center justify-center text-text-muted hover:border-accent-blue/50 transition-colors bg-bg-primary/50"
                 >
                   <Upload className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Tambah</span>
+                  <span className="text-xs">Tambah Foto</span>
                 </button>
               </div>
             )}
 
-            {previews.length === 0 && (
+            {existingPhotos.length === 0 && previews.length === 0 && (
               <div
                 onClick={() => fileRef.current?.click()}
                 className="border-2 border-dashed border-glass-border rounded-xl p-8 text-center cursor-pointer hover:border-accent-blue/50 transition-colors"
@@ -247,16 +361,28 @@ export default function AdminEventsPage() {
             />
           </div>
 
-          {error && <p className="text-sm text-accent-red">{error}</p>}
+          {error && <p className="text-sm text-accent-red font-semibold">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting || files.length === 0 || !title}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-accent-blue text-white text-sm font-semibold hover:bg-accent-blue/90 transition-colors disabled:opacity-60 min-h-[44px]"
-          >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Menyimpan..." : `Simpan Event${files.length > 0 ? ` (${files.length} foto)` : ""}`}
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={submitting || !title || (existingPhotos.length === 0 && files.length === 0)}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-accent-blue text-white text-sm font-semibold hover:bg-accent-blue/90 transition-colors disabled:opacity-60 min-h-[44px] flex-1 sm:flex-none"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {submitting ? "Menyimpan..." : (editItem ? "Simpan Perubahan" : `Simpan Event${files.length > 0 ? ` (${files.length} foto)` : ""}`)}
+            </button>
+            {editItem && (
+               <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={submitting}
+                  className="px-6 py-2.5 rounded-xl bg-glass-panel border border-glass-border text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+               >
+                 Batal
+               </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -298,13 +424,22 @@ export default function AdminEventsPage() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => handleDelete(event)}
-                  className="flex items-center gap-2 text-xs text-accent-red hover:bg-accent-red/10 px-3 py-2 rounded-lg transition-colors min-h-[44px]"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Hapus Event
-                </button>
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => handleEditClick(event)}
+                    className="flex-1 flex items-center justify-center gap-2 text-xs bg-glass-panel hover:bg-white/10 border border-glass-border px-3 py-2 rounded-lg transition-colors min-h-[40px]"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(event)}
+                    className="flex-1 flex items-center justify-center gap-2 text-xs text-accent-red hover:bg-accent-red/10 px-3 py-2 rounded-lg transition-colors min-h-[40px]"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Hapus
+                  </button>
+                </div>
               </div>
             );
           })}

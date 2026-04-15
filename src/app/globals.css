@@ -97,7 +97,6 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Logo carousel animation */
 @keyframes scroll-logos {
   0% {
     transform: translateX(0);
@@ -107,10 +106,24 @@ body {
   }
 }
 
+@keyframes scroll-logos-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .animate-scroll-logos {
   animation: scroll-logos 30s linear infinite;
 }
 
-.animate-scroll-logos:hover {
+.animate-scroll-logos-reverse {
+  animation: scroll-logos-reverse 30s linear infinite;
+}
+
+.animate-scroll-logos:hover,
+.animate-scroll-logos-reverse:hover {
   animation-play-state: paused;
 }

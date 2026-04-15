@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getStoragePath } from "@/lib/storage";
-import { Trash2, Upload, Loader2, X } from "lucide-react";
+import { Trash2, Upload, Loader2, X, Edit, XCircle } from "lucide-react";
 import Image from "next/image";
 
 interface NewsPhoto {
@@ -27,14 +27,21 @@ export default function AdminNewsPage() {
   const [news, setNews] = useState<NewsManual[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Form State
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState("Update");
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  
+  // Edit State
+  const [editItem, setEditItem] = useState<NewsManual | null>(null);
+  const [existingPhotos, setExistingPhotos] = useState<NewsPhoto[]>([]);
+  const [deletedPhotos, setDeletedPhotos] = useState<NewsPhoto[]>([]);
 
+  const fileRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   async function loadNews() {
@@ -72,6 +79,37 @@ export default function AdminNewsPage() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   }
+  
+  function removeExistingPhoto(photo: NewsPhoto) {
+    setExistingPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+    setDeletedPhotos((prev) => [...prev, photo]);
+  }
+
+  function handleEditClick(item: NewsManual) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setEditItem(item);
+    setTitle(item.title);
+    setExcerpt(item.excerpt || "");
+    setCategory(item.category || "Update");
+    setExistingPhotos(item.news_photos);
+    setDeletedPhotos([]);
+    setFiles([]);
+    setPreviews([]);
+    setError("");
+  }
+
+  function handleCancelEdit() {
+    setEditItem(null);
+    setTitle("");
+    setExcerpt("");
+    setCategory("Update");
+    setExistingPhotos([]);
+    setDeletedPhotos([]);
+    setFiles([]);
+    setPreviews([]);
+    setError("");
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,23 +117,57 @@ export default function AdminNewsPage() {
     setSubmitting(true);
     setError("");
 
-    const { data: newsData, error: newsError } = await supabase
-      .from("news_manual")
-      .insert({ title, excerpt, category })
-      .select()
-      .single();
+    let newsId = editItem?.id;
 
-    if (newsError || !newsData) {
-      setError("Gagal membuat berita: " + newsError?.message);
-      setSubmitting(false);
-      return;
+    if (editItem) {
+      // Update Mode
+      const { error: updateError } = await supabase
+        .from("news_manual")
+        .update({ title, excerpt, category })
+        .eq("id", editItem.id);
+
+      if (updateError) {
+        setError("Gagal update berita: " + updateError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      // Delete removed photos
+      if (deletedPhotos.length > 0) {
+        const paths = deletedPhotos
+          .map((p) => getStoragePath(p.image_url, "media"))
+          .filter((p): p is string => p !== null);
+        
+        if (paths.length > 0) {
+          await supabase.storage.from("media").remove(paths);
+        }
+        await supabase
+          .from("news_photos")
+          .delete()
+          .in("id", deletedPhotos.map((p) => p.id));
+      }
+    } else {
+      // Create Mode
+      const { data: newsData, error: newsError } = await supabase
+        .from("news_manual")
+        .insert({ title, excerpt, category })
+        .select()
+        .single();
+
+      if (newsError || !newsData) {
+        setError("Gagal membuat berita: " + newsError?.message);
+        setSubmitting(false);
+        return;
+      }
+      newsId = newsData.id;
     }
 
-    if (files.length > 0) {
+    // Upload new photos
+    if (files.length > 0 && newsId) {
       const uploadResults: string[] = [];
       for (const file of files) {
         const ext = file.name.split(".").pop();
-        const fileName = `news/${newsData.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const fileName = `news/${newsId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("media")
           .upload(fileName, file);
@@ -107,22 +179,21 @@ export default function AdminNewsPage() {
       }
 
       if (uploadResults.length > 0) {
+        const maxExistingIndex = editItem && existingPhotos.length > 0 
+          ? Math.max(...existingPhotos.map(p => p.order_index)) 
+          : -1;
+
         await supabase.from("news_photos").insert(
           uploadResults.map((url, i) => ({
-            news_id: newsData.id,
+            news_id: newsId,
             image_url: url,
-            order_index: i,
+            order_index: maxExistingIndex + 1 + i,
           }))
         );
       }
     }
 
-    setTitle("");
-    setExcerpt("");
-    setCategory("Update");
-    setFiles([]);
-    setPreviews([]);
-    if (fileRef.current) fileRef.current.value = "";
+    handleCancelEdit();
     await loadNews();
     setSubmitting(false);
   }
@@ -139,6 +210,7 @@ export default function AdminNewsPage() {
 
     await supabase.from("news_manual").delete().eq("id", item.id);
     setNews((prev) => prev.filter((n) => n.id !== item.id));
+    if (editItem?.id === item.id) handleCancelEdit();
   }
 
   const inputClass =
@@ -148,11 +220,23 @@ export default function AdminNewsPage() {
     <div>
       <h1 className="text-2xl font-bold mb-1">Berita Manual</h1>
       <p className="text-sm text-text-secondary mb-8">
-        Tambah artikel berita manual — tampil di bawah berita otomatis dari API
+        Kelola artikel berita manual — tampil di bawah berita otomatis dari API
       </p>
 
-      <div className="glass-card p-6 mb-8">
-        <h2 className="text-base font-semibold mb-4">Tambah Berita</h2>
+      <div className={`glass-card p-6 mb-8 border-2 transition-colors ${editItem ? 'border-accent-blue/50 bg-accent-blue/5' : 'border-transparent'}`}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">
+            {editItem ? "Edit Berita" : "Tambah Berita"}
+          </h2>
+          {editItem && (
+            <button
+              onClick={handleCancelEdit}
+              className="text-xs flex items-center gap-1 text-text-secondary hover:text-white transition-colors"
+            >
+              <XCircle className="w-4 h-4" /> Batal Edit
+            </button>
+          )}
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-text-secondary mb-1.5">
@@ -203,12 +287,30 @@ export default function AdminNewsPage() {
               Foto (opsional, bisa banyak sekaligus)
             </label>
 
-            {previews.length > 0 && (
+            {(existingPhotos.length > 0 || previews.length > 0) && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+                {/* Existing */}
+                {existingPhotos.map((photo, i) => (
+                  <div
+                    key={`existing-${i}`}
+                    className="relative aspect-square rounded-lg overflow-hidden bg-bg-tertiary group ring-1 ring-glass-border"
+                  >
+                    <Image src={photo.image_url} alt="" fill className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingPhoto(photo)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-accent-red/90 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                {/* Previews */}
                 {previews.map((src, i) => (
                   <div
-                    key={i}
-                    className="relative aspect-square rounded-lg overflow-hidden bg-bg-tertiary group"
+                    key={`new-${i}`}
+                    className="relative aspect-square rounded-lg overflow-hidden bg-bg-tertiary group ring-2 ring-accent-blue/50"
                   >
                     <Image src={src} alt="" fill className="object-cover" />
                     <button
@@ -218,8 +320,10 @@ export default function AdminNewsPage() {
                     >
                       <X className="w-3 h-3" />
                     </button>
+                    <span className="absolute bottom-1 right-1 text-[10px] bg-accent-blue px-1.5 py-0.5 rounded text-white font-bold">Baru</span>
                   </div>
                 ))}
+                
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
@@ -231,7 +335,7 @@ export default function AdminNewsPage() {
               </div>
             )}
 
-            {previews.length === 0 && (
+            {existingPhotos.length === 0 && previews.length === 0 && (
               <div
                 onClick={() => fileRef.current?.click()}
                 className="border-2 border-dashed border-glass-border rounded-xl p-8 text-center cursor-pointer hover:border-accent-blue/50 transition-colors"
@@ -254,18 +358,30 @@ export default function AdminNewsPage() {
             />
           </div>
 
-          {error && <p className="text-sm text-accent-red">{error}</p>}
+          {error && <p className="text-sm text-accent-red font-semibold">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting || !title}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-accent-blue text-white text-sm font-semibold hover:bg-accent-blue/90 transition-colors disabled:opacity-60 min-h-[44px]"
-          >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting
-              ? "Menyimpan..."
-              : `Simpan Berita${files.length > 0 ? ` (${files.length} foto)` : ""}`}
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={submitting || !title}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-accent-blue text-white text-sm font-semibold hover:bg-accent-blue/90 transition-colors disabled:opacity-60 min-h-[44px] flex-1 sm:flex-none"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {submitting
+                ? "Menyimpan..."
+                : (editItem ? "Simpan Perubahan" : `Simpan Berita${files.length > 0 ? ` (${files.length} foto)` : ""}`)}
+            </button>
+            {editItem && (
+               <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={submitting}
+                  className="px-6 py-2.5 rounded-xl bg-glass-panel border border-glass-border text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+               >
+                 Batal
+               </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -314,13 +430,22 @@ export default function AdminNewsPage() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => handleDelete(item)}
-                  className="flex-shrink-0 p-2 text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  aria-label="Hapus berita"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => handleEditClick(item)}
+                    className="flex-shrink-0 p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center bg-glass-panel"
+                    aria-label="Edit berita"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    className="flex-shrink-0 p-2 text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center bg-glass-panel"
+                    aria-label="Hapus berita"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             );
           })}
