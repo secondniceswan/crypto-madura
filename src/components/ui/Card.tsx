@@ -9,7 +9,7 @@ export default function Card({ children, className = "", hover = false }: CardPr
     <div
       className={`glass-card p-6 ${
         hover
-          ? "transition-all duration-300 hover:-translate-y-1 hover:border-accent-blue/30 hover:shadow-[var(--shadow-glow-blue)]"
+          ? "card-glow hover:-translate-y-1.5 hover:shadow-[0_16px_50px_rgba(0,0,0,0.5)]"
           : ""
       } ${className}`}
     >

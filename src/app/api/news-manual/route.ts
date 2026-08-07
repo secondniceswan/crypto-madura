@@ -5,6 +5,10 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const supabase = await createClient();
+  if (!supabase) {
+    return NextResponse.json([]);
+  }
+
   const { data, error } = await supabase
     .from("news_manual")
     .select("*, news_photos(id, image_url, order_index)")

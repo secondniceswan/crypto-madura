@@ -3,10 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function SponsorsPartners() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("sponsors_partners")
-    .select("*")
-    .order("created_at", { ascending: true });
+  if (!supabase) return null;
+
+  let data: { id: string; name: string; type: string; image_url: string }[] | null = null;
+  try {
+    ({ data } = await supabase
+      .from("sponsors_partners")
+      .select("*")
+      .order("created_at", { ascending: true }));
+  } catch {
+    return null;
+  }
 
   const sponsors = (data || []).filter(item => item.type === "sponsor");
   const partners = (data || []).filter(item => item.type === "partner");

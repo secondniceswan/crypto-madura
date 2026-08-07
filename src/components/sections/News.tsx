@@ -185,6 +185,7 @@ export default function News() {
   return (
     <section id="berita" className="section-container">
       <SectionHeader
+        eyebrow="// Insight pasar"
         title="Berita & Analisis"
         subtitle="Update terbaru seputar pasar crypto dan analisis mendalam"
       />
@@ -192,11 +193,14 @@ export default function News() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="glass-card p-6 animate-pulse">
-              <div className="w-full h-40 rounded-lg bg-bg-tertiary mb-4" />
-              <div className="h-4 bg-bg-tertiary rounded w-1/4 mb-2" />
-              <div className="h-5 bg-bg-tertiary rounded w-3/4 mb-2" />
-              <div className="h-4 bg-bg-tertiary rounded w-full" />
+            <div key={i} className="glass-card p-0 overflow-hidden">
+              <div className="w-full h-44 skeleton" />
+              <div className="p-5 space-y-3">
+                <div className="h-4 skeleton rounded w-1/4" />
+                <div className="h-5 skeleton rounded w-3/4" />
+                <div className="h-4 skeleton rounded w-full" />
+                <div className="h-4 skeleton rounded w-2/3" />
+              </div>
             </div>
           ))}
         </div>

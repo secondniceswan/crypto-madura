@@ -73,11 +73,19 @@ const PLATFORM_HOVER: Record<string, string> = {
 
 export default async function Footer() {
   const supabase = await createClient();
-  const { data: socialLinks } = await supabase
-    .from("social_links")
-    .select("id, platform, label, url, enabled, order_index")
-    .eq("enabled", true)
-    .order("order_index");
+
+  let socialLinks: SocialLink[] | null = null;
+  if (supabase) {
+    try {
+      ({ data: socialLinks } = await supabase
+        .from("social_links")
+        .select("id, platform, label, url, enabled, order_index")
+        .eq("enabled", true)
+        .order("order_index"));
+    } catch {
+      socialLinks = null;
+    }
+  }
 
   const activeSocials = (socialLinks ?? []).filter((s: SocialLink) => s.url);
 
