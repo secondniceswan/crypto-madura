@@ -55,7 +55,13 @@ export default function Hero() {
               alt="Anggota komunitas tersenyum melihat portofolio crypto di ponsel dengan koin Bitcoin beterbangan"
               width={1700}
               height={1473}
-              priority
+              // This is the LCP element. `priority` is deprecated in Next 16, so
+              // load eagerly at high fetch priority instead. React hoists a
+              // <link rel=preload> for any eager img — that is deliberate, and
+              // Firefox's "preloaded but not used" notice about it is a false
+              // positive (setting Next's `preload={false}` does not suppress it).
+              loading="eager"
+              fetchPriority="high"
               className="relative w-full h-auto"
             />
           </div>
