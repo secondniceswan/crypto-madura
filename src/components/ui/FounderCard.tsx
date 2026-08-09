@@ -8,8 +8,8 @@ interface FounderCardProps {
 
 export default function FounderCard({ founder }: FounderCardProps) {
   return (
-    <Card hover className="text-center h-full">
-      <div className="w-36 h-36 rounded-full bg-bg-tertiary mx-auto mb-4 overflow-hidden ring-2 ring-accent-blue/20">
+    <Card hover className="group text-center h-full">
+      <div className="w-36 h-36 rounded-full bg-bg-tertiary mx-auto mb-4 overflow-hidden ring-2 ring-accent-blue/20 transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
         {founder.image ? (
           <img
             src={founder.image}

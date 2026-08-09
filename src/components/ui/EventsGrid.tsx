@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Modal from "./Modal";
+import Reveal from "./Reveal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface EventPhoto {
@@ -51,38 +52,39 @@ export default function EventsGrid({ events }: { events: Event[] }) {
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {events.map((event) => {
+        {events.map((event, i) => {
           const thumb = event.event_photos[0]?.image_url;
           return (
-            <button
-              key={event.id}
-              onClick={() => openEvent(event)}
-              className="relative aspect-square rounded-xl overflow-hidden bg-bg-tertiary group focus:outline-none focus:ring-2 focus:ring-accent-blue"
-            >
-              {thumb ? (
-                <img
-                  src={thumb}
-                  alt={event.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-accent-blue/10 to-accent-cyan/10" />
-              )}
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-start justify-end">
-                <div className="p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-full">
-                  <p className="text-xs font-semibold text-white leading-tight truncate">
-                    {event.title}
-                  </p>
-                  {event.event_photos.length > 1 && (
-                    <p className="text-xs text-white/60 mt-0.5">
-                      {event.event_photos.length} foto
+            <Reveal key={event.id} delay={i * 60} variant="kinetic">
+              <button
+                onClick={() => openEvent(event)}
+                className="relative aspect-square w-full rounded-xl overflow-hidden bg-bg-tertiary group focus:outline-none focus:ring-2 focus:ring-accent-blue"
+              >
+                {thumb ? (
+                  <img
+                    src={thumb}
+                    alt={event.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-accent-blue/10 to-accent-cyan/10" />
+                )}
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-start justify-end">
+                  <div className="p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-full">
+                    <p className="text-xs font-semibold text-white leading-tight truncate">
+                      {event.title}
                     </p>
-                  )}
+                    {event.event_photos.length > 1 && (
+                      <p className="text-xs text-white/60 mt-0.5">
+                        {event.event_photos.length} foto
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+            </Reveal>
           );
         })}
       </div>

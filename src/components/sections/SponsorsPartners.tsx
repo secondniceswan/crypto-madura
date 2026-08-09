@@ -29,7 +29,7 @@ export default async function SponsorsPartners() {
   const partnersArray = [...partners, ...partners, ...partners, ...partners];
 
   return (
-    <section className="border-y border-glass-border bg-bg-secondary w-full relative overflow-hidden flex flex-col py-16">
+    <section className="section-curtain bg-bg-secondary w-full overflow-hidden flex flex-col py-16">
       <div className="absolute inset-y-0 left-0 w-16 md:w-40 bg-gradient-to-r from-bg-secondary to-transparent z-10 pointer-events-none"></div>
       <div className="absolute inset-y-0 right-0 w-16 md:w-40 bg-gradient-to-l from-bg-secondary to-transparent z-10 pointer-events-none"></div>
       

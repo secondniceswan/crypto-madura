@@ -15,7 +15,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Wrapper {...wrapperProps} className="block h-full">
       <Card hover className="group flex flex-col h-full p-0 overflow-hidden">
-        <div className="relative w-full h-44 bg-bg-tertiary overflow-hidden">
+        <div className="relative w-full h-44 mask-arc-bottom bg-bg-tertiary overflow-hidden">
           {article.thumbnail && article.thumbnail.startsWith("http") ? (
             <img
               src={article.thumbnail}

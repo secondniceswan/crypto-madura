@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ArticleCard from "@/components/ui/ArticleCard";
 import Modal from "@/components/ui/Modal";
+import Reveal from "@/components/ui/Reveal";
 import { fallbackArticles } from "@/lib/data";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Article, NewsApiArticle } from "@/types";
@@ -78,7 +79,7 @@ function ManualArticleCard({
     >
       <div className="glass-card flex flex-col h-full hover:border-accent-blue/30 transition-colors p-5">
         {article.thumbnail && (
-          <div className="relative w-full h-40 rounded-lg bg-bg-tertiary mb-4 overflow-hidden">
+          <div className="relative w-full h-40 mask-arc-bottom bg-bg-tertiary mb-4 overflow-hidden">
             <img
               src={article.thumbnail}
               alt={article.title}
@@ -207,8 +208,10 @@ export default function News() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {apiArticles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
+            {apiArticles.map((article, i) => (
+              <Reveal key={article.id} delay={i * 70} variant="kinetic">
+                <ArticleCard article={article} />
+              </Reveal>
             ))}
           </div>
 
@@ -218,12 +221,13 @@ export default function News() {
                 Dari Tim Kami
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {manualArticles.map((article) => (
-                  <ManualArticleCard
-                    key={article.id}
-                    article={article}
-                    onClick={() => openNews(article)}
-                  />
+                {manualArticles.map((article, i) => (
+                  <Reveal key={article.id} delay={i * 70} variant="kinetic">
+                    <ManualArticleCard
+                      article={article}
+                      onClick={() => openNews(article)}
+                    />
+                  </Reveal>
                 ))}
               </div>
             </div>

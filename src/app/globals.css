@@ -184,6 +184,65 @@ body {
   transform: none;
 }
 
+/* Punchier variant for grid cards — same mechanism as .reveal (IntersectionObserver
+   toggles .is-visible), just a more "motion graphics" entrance: scale + slight tilt
+   instead of a plain rise. */
+.reveal-kinetic {
+  opacity: 0;
+  transform: translateY(40px) scale(0.94) rotate(-1.2deg);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal-kinetic.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================ Kinetic split-text ============================ */
+/* Base (hidden) state for words split by <SplitWords>. Set here — not just via
+   GSAP's "from" — so the very first paint (before JS/gsap runs) already hides
+   them; GSAP only ever animates them *to* the revealed state, avoiding a flash
+   of fully-visible text that then jumps to hidden. */
+.split-word {
+  display: inline-block;
+  transform: translateY(115%);
+}
+
+/* ============================ Section curtain ============================ */
+/* A following section's rounded top edge "rolls over" the one before it —
+   the overlap illusion used throughout for section-to-section transitions. */
+/* position:relative only anchors this section's own absolutely-positioned
+   decorative children — normal DOM order already paints it over the section
+   before it at the overlap, no z-index needed. */
+.section-curtain {
+  position: relative;
+  border-radius: 2.5rem 2.5rem 0 0;
+  margin-top: -2.5rem;
+}
+@media (min-width: 640px) {
+  .section-curtain {
+    border-radius: 4rem 4rem 0 0;
+    margin-top: -4rem;
+  }
+}
+
+/* ============================ Arc image masks ============================ */
+.mask-arc-top {
+  border-radius: 100% 100% 0 0 / 2.5rem 2.5rem 0 0;
+}
+.mask-arc-bottom {
+  border-radius: 0 0 100% 100% / 0 0 2.5rem 2.5rem;
+}
+@media (min-width: 640px) {
+  .mask-arc-top {
+    border-radius: 100% 100% 0 0 / 4rem 4rem 0 0;
+  }
+  .mask-arc-bottom {
+    border-radius: 0 0 100% 100% / 0 0 4rem 4rem;
+  }
+}
+
 /* ============================ Keyframes ============================ */
 @keyframes aurora {
   0%, 100% {
@@ -283,7 +342,9 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  .reveal {
+  .reveal,
+  .reveal-kinetic,
+  .split-word {
     opacity: 1;
     transform: none;
   }
