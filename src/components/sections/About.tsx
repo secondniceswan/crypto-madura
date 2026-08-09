@@ -34,7 +34,7 @@ const statusRows = [
 
 export default function About() {
   return (
-    <section id="about" className="section-curtain bg-bg-primary overflow-hidden">
+    <section id="about" className="relative bg-bg-secondary/40 border-y border-glass-border overflow-hidden">
       <div className="section-container">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text */}
@@ -54,7 +54,7 @@ export default function About() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {features.map((f, i) => (
-                <Reveal key={f.title} delay={i * 80} variant="kinetic" className="group flex gap-4">
+                <Reveal key={f.title} delay={i * 80} className="group flex gap-4">
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-accent-blue/25 to-accent-cyan/10 border border-accent-blue/20 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
                     <f.icon className="w-5 h-5 text-accent-cyan" />
                   </div>

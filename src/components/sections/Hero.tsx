@@ -1,13 +1,7 @@
-"use client";
-
 import Image from "next/image";
 import { ArrowRight, MessageCircle, TrendingUp, ShieldCheck, GraduationCap } from "lucide-react";
 import { SITE } from "@/lib/constants";
 import Aurora from "@/components/ui/Aurora";
-import Reveal from "@/components/ui/Reveal";
-import SplitWords from "@/components/ui/SplitWords";
-import { useKineticReveal } from "@/lib/useKineticReveal";
-import { useParallax } from "@/lib/useParallax";
 
 const TICKER = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "TON", "AVAX", "LINK", "MATIC", "DOT"];
 
@@ -18,10 +12,6 @@ const HIGHLIGHTS = [
 ];
 
 export default function Hero() {
-  // Above the fold — reveal on mount, not on scroll.
-  const headlineRef = useKineticReveal<HTMLHeadingElement>();
-  const imageWrapRef = useParallax<HTMLDivElement>(40);
-
   return (
     <section
       id="home"
@@ -42,30 +32,17 @@ export default function Hero() {
         <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.3fr)] lg:grid-rows-[1fr_1fr] gap-x-8 gap-y-7 lg:gap-x-6 lg:gap-y-0 items-center">
           {/* ---------- Headline block ---------- */}
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end text-center lg:text-left">
-            <h1
-              ref={headlineRef}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-4"
-            >
-              <SplitWords
-                words={[
-                  "Bangun",
-                  "Legacy",
-                  <span key="gradient" className="gradient-text">
-                    Crypto-mu
-                  </span>,
-                  "bareng",
-                  "komunitas.",
-                ]}
-              />
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-4">
+              Bangun Legacy{" "}
+              <span className="gradient-text">Crypto-mu</span>{" "}
+              bareng komunitas.
             </h1>
 
             {/* Tagline (plain, no border/dot) */}
-            <Reveal delay={550}>
-              <p className="text-sm sm:text-base lg:text-lg font-medium tracking-wide text-text-secondary lg:mb-6">
-                Komunitas Crypto{" "}
-                <span className="text-accent-cyan font-semibold">#1 di Madura</span>
-              </p>
-            </Reveal>
+            <p className="text-sm sm:text-base lg:text-lg font-medium tracking-wide text-text-secondary lg:mb-6">
+              Komunitas Crypto{" "}
+              <span className="text-accent-cyan font-semibold">#1 di Madura</span>
+            </p>
           </div>
 
           {/* ---------- Hero illustration ---------- */}
@@ -73,67 +50,59 @@ export default function Hero() {
           <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-center relative mx-auto w-full max-lg:max-w-md lg:-mr-6 xl:-mr-10">
             {/* glow */}
             <div className="absolute inset-0 bg-gradient-to-tr from-accent-blue/20 via-accent-cyan/10 to-transparent blur-3xl rounded-full" />
-            <div ref={imageWrapRef}>
-              <Image
-                src="/images/hero-crypto.webp"
-                alt="Anggota komunitas tersenyum melihat portofolio crypto di ponsel dengan koin Bitcoin beterbangan"
-                width={1700}
-                height={1473}
-                // This is the LCP element. `priority` is deprecated in Next 16, so
-                // load eagerly at high fetch priority instead. React hoists a
-                // <link rel=preload> for any eager img — that is deliberate, and
-                // Firefox's "preloaded but not used" notice about it is a false
-                // positive (setting Next's `preload={false}` does not suppress it).
-                loading="eager"
-                fetchPriority="high"
-                className="relative w-full h-auto"
-              />
-            </div>
+            <Image
+              src="/images/hero-crypto.webp"
+              alt="Anggota komunitas tersenyum melihat portofolio crypto di ponsel dengan koin Bitcoin beterbangan"
+              width={1700}
+              height={1473}
+              // This is the LCP element. `priority` is deprecated in Next 16, so
+              // load eagerly at high fetch priority instead. React hoists a
+              // <link rel=preload> for any eager img — that is deliberate, and
+              // Firefox's "preloaded but not used" notice about it is a false
+              // positive (setting Next's `preload={false}` does not suppress it).
+              loading="eager"
+              fetchPriority="high"
+              className="relative w-full h-auto"
+            />
           </div>
 
           {/* ---------- Rest of the copy ---------- */}
           <div className="lg:col-start-1 lg:row-start-2 lg:self-start text-center lg:text-left">
             {/* Subtitle */}
-            <Reveal delay={650}>
-              <p className="text-lg sm:text-xl text-text-secondary max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
-                Bergabung dengan komunitas trader dan investor crypto di Madura.
-                Edukasi, sinyal trading, dan networking dalam satu platform.
-              </p>
-            </Reveal>
+            <p className="text-lg sm:text-xl text-text-secondary max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
+              Bergabung dengan komunitas trader dan investor crypto di Madura.
+              Edukasi, sinyal trading, dan networking dalam satu platform.
+            </p>
 
             {/* CTAs */}
-            <Reveal delay={750}>
-              <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4 mb-8">
-                <a
-                  href={SITE.whatsappGroup}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2 bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-[var(--shadow-glow-blue)] hover:brightness-110 min-h-[44px] w-full sm:w-auto justify-center"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  Gabung Komunitas
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </a>
-                <a
-                  href="#layanan"
-                  className="inline-flex items-center gap-2 border border-glass-border bg-white/[0.02] text-text-primary px-8 py-4 rounded-xl font-semibold text-base hover:bg-white/[0.06] hover:border-accent-blue/40 transition-all min-h-[44px] w-full sm:w-auto justify-center"
-                >
-                  Lihat Layanan
-                </a>
-              </div>
-            </Reveal>
+            <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4 mb-8">
+              <a
+                href={SITE.whatsappGroup}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2 bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-8 py-4 rounded-xl font-semibold text-base transition-all shadow-[var(--shadow-glow-blue)] hover:brightness-110 min-h-[44px] w-full sm:w-auto justify-center"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Gabung Komunitas
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </a>
+              <a
+                href="#layanan"
+                className="inline-flex items-center gap-2 border border-glass-border bg-white/[0.02] text-text-primary px-8 py-4 rounded-xl font-semibold text-base hover:bg-white/[0.06] hover:border-accent-blue/40 transition-all min-h-[44px] w-full sm:w-auto justify-center"
+              >
+                Lihat Layanan
+              </a>
+            </div>
 
             {/* Highlight chips */}
-            <Reveal delay={850}>
-              <div className="flex flex-wrap items-center lg:justify-start justify-center gap-x-5 gap-y-2">
-                {HIGHLIGHTS.map((h) => (
-                  <span key={h.label} className="inline-flex items-center gap-2 text-sm text-text-secondary">
-                    <h.icon className="w-4 h-4 text-accent-cyan" />
-                    {h.label}
-                  </span>
-                ))}
-              </div>
-            </Reveal>
+            <div className="flex flex-wrap items-center lg:justify-start justify-center gap-x-5 gap-y-2">
+              {HIGHLIGHTS.map((h) => (
+                <span key={h.label} className="inline-flex items-center gap-2 text-sm text-text-secondary">
+                  <h.icon className="w-4 h-4 text-accent-cyan" />
+                  {h.label}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>

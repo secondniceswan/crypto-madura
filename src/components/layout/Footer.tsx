@@ -2,7 +2,6 @@ import Image from "next/image";
 import { ExternalLink, FileText, MessageCircle } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
-import FooterStatement from "@/components/ui/FooterStatement";
 
 interface SocialLink {
   id: number;
@@ -91,11 +90,8 @@ export default async function Footer() {
   const activeSocials = (socialLinks ?? []).filter((s: SocialLink) => s.url);
 
   return (
-    // bg-primary (not -secondary, which Founders right above already uses) so the
-    // curtain seam actually reads as an overlap instead of two same-tone panels.
-    <footer className="section-curtain bg-bg-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <FooterStatement />
+    <footer className="bg-bg-secondary border-t border-glass-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
